@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Cargar los datos (puedes cambiar el nombre del archivo si es diferente)
-dataset = pd.read_csv('datos_pellet', parse_dates=['Semana'])
+dataset = pd.read_csv('datos_pellet.csv', parse_dates=['Semana'])
 
 # Filtros interactivos
 st.sidebar.title("Filtros")
