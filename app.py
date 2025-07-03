@@ -17,22 +17,6 @@ tipos = sorted(dataset['TipoAlimento'].dropna().unique())
 meses = sorted(dataset['Mes'].unique())
 
 
-
-# Filtro Mes
-st.sidebar.write("### Mes")
-select_all_meses = st.sidebar.checkbox("Seleccionar todos los meses", value=True)
-mes_sel = meses if select_all_meses else st.sidebar.multiselect("Selecciona Mes (01–12)", meses)
-
-# Filtro TipoAlimento
-st.sidebar.write("### Tipo de Alimento")
-select_all_tipos = st.sidebar.checkbox("Seleccionar todos los tipos", value=True)
-tipo_sel = tipos if select_all_tipos else st.sidebar.multiselect("Selecciona Tipo de Alimento", tipos)
-
-# Filtro Año
-st.sidebar.write("### Año")
-select_all_anios = st.sidebar.checkbox("Seleccionar todos los años", value=True)
-anio_sel = anios if select_all_anios else st.sidebar.multiselect("Selecciona Año", anios)
-
 # Filtrar datos
 df_filtrado = dataset[
     dataset['Anio'].isin(anio_sel) &
