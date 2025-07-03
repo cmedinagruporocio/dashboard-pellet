@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Cargar los datos (puedes cambiar el nombre del archivo si es diferente)
+# Cargar los datos
 dataset = pd.read_csv('datos_pellet.csv', parse_dates=['Semana'])
 
 # Filtros interactivos
@@ -49,7 +49,9 @@ def escalar(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val) * (max_kwh - min_kwh) + min_kwh
 
 rend_esc = escalar(agrupado['Rendimiento'], min_rend, max_rend)
-agrupado['MesAnio'] = agrupado['Semana'].dt.strftime('%m-%y')
+
+# Mes abreviado (Jan, Feb, etc.)
+agrupado['MesAnio'] = agrupado['Semana'].dt.strftime('%b')
 
 # Crear gráfico
 fig, ax1 = plt.subplots(figsize=(14, 7))
@@ -75,7 +77,7 @@ ax1.set_xticks(agrupado['Semana'])
 ax1.set_xticklabels(agrupado['SemanaNum'], rotation=45)
 ax_top = ax1.secondary_xaxis('top')
 ax_top.set_xticks(agrupado['Semana'])
-ax_top.set_xticklabels(agrupado['MesAnio'])
+ax_top.set_xticklabels(agrupado['MesAnio'], fontsize=8)
 
 # Leyenda y título
 lines = [line1, line2, line3]
