@@ -5,21 +5,33 @@ import matplotlib.pyplot as plt
 # Cargar los datos
 dataset = pd.read_csv('datos_pellet.csv', parse_dates=['Semana'])
 
-# Crear columnas para filtros
-dataset['Mes'] = dataset['Semana'].dt.strftime('%m')         # Para el filtro
-dataset['MesAbrev'] = dataset['Semana'].dt.strftime('%b')    # Para el eje superior
+# Crear columnas auxiliares
+dataset['Mes'] = dataset['Semana'].dt.strftime('%m')          # Para filtro
+dataset['MesAbrev'] = dataset['Semana'].dt.strftime('%b')     # Para eje superior
 
 # Filtros interactivos
 st.sidebar.title("Filtros")
+
 anios = sorted(dataset['Anio'].dropna().unique(), reverse=True)
 tipos = sorted(dataset['TipoAlimento'].dropna().unique())
-meses = sorted(dataset['Mes'].unique(), reverse=True)
+meses = sorted(dataset['Mes'].unique())
 
-anio_sel = st.sidebar.multiselect("Selecciona Año", anios, default=anios)
-tipo_sel = st.sidebar.multiselect("Selecciona Tipo de Alimento", tipos, default=tipos)
-mes_sel = st.sidebar.multiselect("Selecciona Mes (01–12)", meses, default=meses)
+# Filtro Año
+st.sidebar.write("### Año")
+select_all_anios = st.sidebar.checkbox("Seleccionar todos los años", value=True)
+anio_sel = anios if select_all_anios else st.sidebar.multiselect("Selecciona Año", anios)
 
-# Aplicar filtros
+# Filtro TipoAlimento
+st.sidebar.write("### Tipo de Alimento")
+select_all_tipos = st.sidebar.checkbox("Seleccionar todos los tipos", value=True)
+tipo_sel = tipos if select_all_tipos else st.sidebar.multiselect("Selecciona Tipo de Alimento", tipos)
+
+# Filtro Mes
+st.sidebar.write("### Mes")
+select_all_meses = st.sidebar.checkbox("Seleccionar todos los meses", value=True)
+mes_sel = meses if select_all_meses else st.sidebar.multiselect("Selecciona Mes (01–12)", meses)
+
+# Filtrar datos
 df_filtrado = dataset[
     dataset['Anio'].isin(anio_sel) &
     dataset['TipoAlimento'].isin(tipo_sel) &
@@ -31,13 +43,14 @@ if df_filtrado.empty:
     st.warning("No hay datos para los filtros seleccionados.")
     st.stop()
 
-# Agrupar por semana y calcular promedio ponderado
+# Función de promedio ponderado
 def promedio_ponderado(df, valor_col, peso_col):
     total_peso = df[peso_col].sum()
     if total_peso == 0:
         return 0
     return (df[valor_col] * df[peso_col]).sum() / total_peso
 
+# Agrupar por semana
 agrupado = df_filtrado.groupby(['Semana', 'SemanaNum', 'Anio']).apply(
     lambda df: pd.Series({
         'kwh_prensa': promedio_ponderado(df, 'kwh_prensa', 'ton'),
@@ -46,7 +59,7 @@ agrupado = df_filtrado.groupby(['Semana', 'SemanaNum', 'Anio']).apply(
     })
 ).reset_index()
 
-# Escalar rendimiento
+# Escalar Rendimiento
 min_kwh, max_kwh = agrupado['kwh_prensa'].min(), agrupado['kwh_prensa'].max()
 min_rend, max_rend = agrupado['Rendimiento'].min(), agrupado['Rendimiento'].max()
 
@@ -56,8 +69,6 @@ def escalar(col, min_val, max_val):
     return (col - min_val) / (max_val - min_val) * (max_kwh - min_kwh) + min_kwh
 
 rend_esc = escalar(agrupado['Rendimiento'], min_rend, max_rend)
-
-# Añadir columna de mes abreviado
 agrupado['MesAbrev'] = agrupado['Semana'].dt.strftime('%b')
 
 # Crear gráfico
@@ -73,17 +84,17 @@ line3, = ax2.plot(agrupado['Semana'], agrupado['porc_prensa'], color='green', li
 ax2.set_ylabel('Porcentaje Prensa', fontweight='bold', color='black')
 ax2.tick_params(axis='y', colors='black', labelsize=9)
 
-# Etiquetas en puntos
+# Etiquetas
 for i, fila in agrupado.iterrows():
     ax1.text(fila['Semana'], fila['kwh_prensa'] + 0.1, f"{fila['kwh_prensa']:.1f}", color='blue', fontsize=7, ha='center')
     ax1.text(fila['Semana'], rend_esc[i] + 0.1, f"{fila['Rendimiento']:.1f}", color='black', fontsize=7, ha='center')
     ax2.text(fila['Semana'], fila['porc_prensa'] + 0.5, f"{fila['porc_prensa']:.1f}", color='green', fontsize=7, ha='center')
 
-# Ejes x
+# Eje inferior: SemanaNum
 ax1.set_xticks(agrupado['Semana'])
 ax1.set_xticklabels(agrupado['SemanaNum'], rotation=45)
 
-# Eje superior con mes abreviado
+# Eje superior: Mes abreviado
 ax_top = ax1.secondary_xaxis('top')
 ax_top.set_xticks(agrupado['Semana'])
 ax_top.set_xticklabels(agrupado['MesAbrev'], fontsize=8)
