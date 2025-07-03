@@ -5,18 +5,24 @@ import matplotlib.pyplot as plt
 # Cargar los datos
 dataset = pd.read_csv('datos_pellet.csv', parse_dates=['Semana'])
 
+# Crear columna de mes abreviado para el filtro
+dataset['Mes'] = dataset['Semana'].dt.strftime('%b')
+
 # Filtros interactivos
 st.sidebar.title("Filtros")
 anios = sorted(dataset['Anio'].dropna().unique())
 tipos = sorted(dataset['TipoAlimento'].dropna().unique())
+meses = dataset['Mes'].unique().tolist()
 
 anio_sel = st.sidebar.multiselect("Selecciona Año", anios, default=anios)
 tipo_sel = st.sidebar.multiselect("Selecciona Tipo de Alimento", tipos, default=tipos)
+mes_sel = st.sidebar.multiselect("Selecciona Mes", meses, default=meses)
 
 # Aplicar filtros
 df_filtrado = dataset[
     dataset['Anio'].isin(anio_sel) & 
-    dataset['TipoAlimento'].isin(tipo_sel)
+    dataset['TipoAlimento'].isin(tipo_sel) &
+    dataset['Mes'].isin(mes_sel)
 ]
 
 # Validar que haya datos
@@ -50,7 +56,7 @@ def escalar(col, min_val, max_val):
 
 rend_esc = escalar(agrupado['Rendimiento'], min_rend, max_rend)
 
-# Mes abreviado (Jan, Feb, etc.)
+# Mes abreviado para eje superior
 agrupado['MesAnio'] = agrupado['Semana'].dt.strftime('%b')
 
 # Crear gráfico
@@ -87,3 +93,4 @@ plt.title("kW/h Prensa vs Rendimiento vs Porcentaje Uso Prensa por Semana", pad=
 
 # Mostrar gráfico
 st.pyplot(fig)
+
