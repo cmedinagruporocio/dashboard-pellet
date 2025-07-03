@@ -5,22 +5,23 @@ import matplotlib.pyplot as plt
 # Cargar los datos
 dataset = pd.read_csv('datos_pellet.csv', parse_dates=['Semana'])
 
-# Crear columna de mes abreviado para el filtro
-dataset['Mes'] = dataset['Semana'].dt.strftime('%b')
+# Crear columnas para filtros
+dataset['Mes'] = dataset['Semana'].dt.strftime('%m')         # Para el filtro
+dataset['MesAbrev'] = dataset['Semana'].dt.strftime('%b')    # Para el eje superior
 
 # Filtros interactivos
 st.sidebar.title("Filtros")
-anios = sorted(dataset['Anio'].dropna().unique())
+anios = sorted(dataset['Anio'].dropna().unique(), reverse=True)
 tipos = sorted(dataset['TipoAlimento'].dropna().unique())
-meses = dataset['Mes'].unique().tolist()
+meses = sorted(dataset['Mes'].unique(), reverse=True)
 
 anio_sel = st.sidebar.multiselect("Selecciona Año", anios, default=anios)
 tipo_sel = st.sidebar.multiselect("Selecciona Tipo de Alimento", tipos, default=tipos)
-mes_sel = st.sidebar.multiselect("Selecciona Mes", meses, default=meses)
+mes_sel = st.sidebar.multiselect("Selecciona Mes (01–12)", meses, default=meses)
 
 # Aplicar filtros
 df_filtrado = dataset[
-    dataset['Anio'].isin(anio_sel) & 
+    dataset['Anio'].isin(anio_sel) &
     dataset['TipoAlimento'].isin(tipo_sel) &
     dataset['Mes'].isin(mes_sel)
 ]
@@ -56,8 +57,8 @@ def escalar(col, min_val, max_val):
 
 rend_esc = escalar(agrupado['Rendimiento'], min_rend, max_rend)
 
-# Mes abreviado para eje superior
-agrupado['MesAnio'] = agrupado['Semana'].dt.strftime('%b')
+# Añadir columna de mes abreviado
+agrupado['MesAbrev'] = agrupado['Semana'].dt.strftime('%b')
 
 # Crear gráfico
 fig, ax1 = plt.subplots(figsize=(14, 7))
@@ -81,9 +82,11 @@ for i, fila in agrupado.iterrows():
 # Ejes x
 ax1.set_xticks(agrupado['Semana'])
 ax1.set_xticklabels(agrupado['SemanaNum'], rotation=45)
+
+# Eje superior con mes abreviado
 ax_top = ax1.secondary_xaxis('top')
 ax_top.set_xticks(agrupado['Semana'])
-ax_top.set_xticklabels(agrupado['MesAnio'], fontsize=8)
+ax_top.set_xticklabels(agrupado['MesAbrev'], fontsize=8)
 
 # Leyenda y título
 lines = [line1, line2, line3]
